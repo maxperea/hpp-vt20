@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -g
 LDFLAGS = 
-NAME = weather
+NAME = january
 
 SRC := $(wildcard *.c)
 HDR := $(wildcard *.h);
