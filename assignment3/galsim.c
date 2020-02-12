@@ -16,14 +16,13 @@ void draw_particles(particle* data, int N)
 // What to do for each step
 // Alla ska väl uppdateras samtidigt, dvs för varje timestep
 // Så hur uppdatera data? Kopia på data och sen byta pekare? dubbelpekare in?
-void step(particle* data)
+void step(particle* data, double delta_t, int N)
 {
   
-}
-
-void main_loop(particle* data, int steps, double delta_t, int N)
-{
-  
+  for(int i = 0; i < N; i++)
+    {
+      // Do stuff
+    }
 }
 
 int main(int argc, char* argv[])
@@ -45,7 +44,11 @@ int main(int argc, char* argv[])
       InitializeGraphics(argv[0], wdw_width, wdw_height);
 
       while(!CheckForQuit()) {
-        main_loop(data, steps, delta_t, N);
+        if(steps > 0)
+          {
+            step(data, delta_t, N);
+            steps--;
+          }
         draw_particles(data, N);
         Refresh();
       }
@@ -54,7 +57,10 @@ int main(int argc, char* argv[])
     }
   else
     {
-      main_loop(data, steps, delta_t, N);
+      while(steps > 0){
+        step(data, delta_t, N);
+        steps--;
+      }
     }
 
   //TODO write_file(filename, data, N);
