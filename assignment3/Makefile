@@ -1,6 +1,7 @@
 CC = gcc
-CFLAGS = -Wall -g 
-LDFLAGS = 
+CFLAGS = -Wall -g
+INCLUDES=-I/opt/X11/include
+LDFLAGS=-L/opt/X11/lib -lX11 -lm
 NAME = galsim
 
 SRC := $(wildcard *.c)
@@ -10,14 +11,14 @@ OBJ = $(SRC:.c=.o)
 all: $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME) $(LDFLAGS)
 
-run: $(NAME)
-	./$(NAME)
+run: all
+	./$(NAME) 2 input_data/circles_N_2.gal 2 0.001 1
 
 debug: all
 	gdb ./$(NAME)
 
 %.o: %.c %.h
-	$(CC) $(CFLAGS) $*.c $*.h -c
+	$(CC) $(CFLAGS) $(INCLUDES) $*.c $*.h -c
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -c
