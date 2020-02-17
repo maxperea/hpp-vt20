@@ -3,6 +3,8 @@ CFLAGS = -Wall -g
 INCLUDES=-I/opt/X11/include
 LDFLAGS=-L/opt/X11/lib -lX11 -lm
 NAME = galsim
+#ARG = 4 input_data/circles_N_4.gal 10000 0.00001 1
+ARG = 1000 input_data/ellipse_N_01000.gal 10000 0.0001 1
 
 SRC := $(wildcard *.c)
 HDR := $(wildcard *.h);
@@ -12,7 +14,7 @@ all: $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME) $(LDFLAGS)
 
 run: all
-	./$(NAME) 2 input_data/circles_N_2.gal 2 0.001 1
+	./$(NAME) $(ARG)
 
 debug: all
 	gdb ./$(NAME)
