@@ -26,7 +26,7 @@ void get_force(double *F, particle *data, int i, int N){
       F[1] += (data[j].mass / pow(r_ij + e0, 3)) * (data[i].x[1] - data[j].x[1]);
     }
   }
-  int scalar = -(100/N) * data[i].mass;
+  double scalar = -(100/N) * data[i].mass;
   F[0] = scalar*F[0];
   F[1] = scalar*F[1];
 }
@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
   int g = atoi(argv[5]);
 
   particle* last_data = read_file(filename, N);
-  particle *data = malloc(N*sizeof(particle));
+  particle* data = read_file(filename, N);
 
   if(g)
   {
@@ -83,11 +83,12 @@ int main(int argc, char* argv[])
       Refresh();
       if(steps > 0)
       {
-        printf("X1: %f  Y1: %f, X2: %f Y2: %f\n", last_data[0].x[0], last_data[0].x[1], last_data[1].x[0], last_data[1].x[1]);
         step(data, last_data, delta_t, N);
+        //Swap=
         particle *tmp = last_data;
         last_data = data;
         data = tmp;
+        //=====
         steps--;
       }
     }
