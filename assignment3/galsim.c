@@ -26,35 +26,35 @@ void get_force(double *F, particle *data, int i, int N){
       F[1] += (data[j].mass / pow(r_ij + e0, 3)) * (data[i].x[1] - data[j].x[1]);
     }
   }
-  int scalar = -(100/N) * data[i].mass;
+  double scalar = -(100/N) * data[i].mass;
   F[0] = scalar*F[0];
   F[1] = scalar*F[1];
 }
 
 // Uppdaterar partikel i enligt kraften F efter tidssteg dt.
-void update_particle(double *F, particle *data, int i, double dt){
+void update_particle(double *F, particle *data, particle *last_data, int i, double dt){
   double a[2];
 
-  a[0] = F[0] / data[i].mass;
-  a[1] = F[1] / data[i].mass;
+  a[0] = F[0] / last_data[i].mass;
+  a[1] = F[1] / last_data[i].mass;
 
-  data[i].u[0] = data[i].u[0] + dt*a[0];
-  data[i].u[1] = data[i].u[1] + dt*a[1];
+  data[i].u[0] = last_data[i].u[0] + dt*a[0];
+  data[i].u[1] = last_data[i].u[1] + dt*a[1];
 
-  data[i].x[0] = data[i].x[0] + dt*data[i].u[0];
-  data[i].x[1] = data[i].x[1] + dt*data[i].u[1];
+  data[i].x[0] = last_data[i].x[0] + dt*data[i].u[0];
+  data[i].x[1] = last_data[i].x[1] + dt*data[i].u[1];
 }
 
 // What to do for each step
 // Alla ska väl uppdateras samtidigt, dvs för varje timestep
 // Så hur uppdatera data? Kopia på data och sen byta pekare? dubbelpekare in?
-void step(particle* data, double delta_t, int N)
+void step(particle* data, particle *last_data, double delta_t, int N)
 {
   for(int i = 0; i < N; i++)
   {
     double F[2] = {0, 0};
-    get_force(F, data, i, N);
-    update_particle(F, data, i, delta_t);
+    get_force(F, last_data, i, N);
+    update_particle(F, data, last_data, i, delta_t);
   }
 }
 
@@ -69,6 +69,7 @@ int main(int argc, char* argv[])
   double delta_t = atof(argv[4]);
   int g = atoi(argv[5]);
 
+  particle* last_data = read_file(filename, N);
   particle* data = read_file(filename, N);
 
   if(g)
@@ -82,8 +83,12 @@ int main(int argc, char* argv[])
       Refresh();
       if(steps > 0)
       {
-        //printf("X1: %f  Y1: %f, X2: %f Y2: %f\n", data[0].x[0], data[0].x[1], data[1].x[0], data[1].x[1]);
-        step(data, delta_t, N);
+        step(data, last_data, delta_t, N);
+        //Swap=
+        particle *tmp = last_data;
+        last_data = data;
+        data = tmp;
+        //=====
         steps--;
       }
     }
@@ -93,7 +98,7 @@ int main(int argc, char* argv[])
   else
   {
     while(steps > 0){
-      step(data, delta_t, N);
+      step(data, last_data, delta_t, N);
       steps--;
     }
   }
