@@ -1,8 +1,8 @@
 
 
 typedef struct {
-  double x, y;
+  double x[2];
   double mass;
-  double vx, vy;
+  double u[2];
   double b; // brightness ??
 } particle;
