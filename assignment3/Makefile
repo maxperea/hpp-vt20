@@ -7,7 +7,7 @@ ARG = 4 input_data/sun_and_planets_N_4.gal 100000 0.00001 1
 #ARG = 1000 input_data/ellipse_N_01000.gal 10000 0.0001 1
 
 SRC := $(wildcard *.c)
-HDR := $(wildcard *.h);
+HDR := $(wildcard *.h)
 OBJ = $(SRC:.c=.o)
 
 all: $(SRC) $(HDR) $(NAME)
