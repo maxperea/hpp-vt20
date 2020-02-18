@@ -10,7 +10,9 @@ SRC := $(wildcard *.c)
 HDR := $(wildcard *.h);
 OBJ = $(SRC:.c=.o)
 
-all: $(OBJ)
+all: $(SRC) $(HDR) $(NAME)
+
+$(NAME): $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME) $(LDFLAGS)
 
 run: all
