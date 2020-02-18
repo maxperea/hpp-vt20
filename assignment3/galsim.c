@@ -6,13 +6,12 @@
 
 const double circle_radius=0.0025, circle_color=0;
 const double e0 = 1e-3;
-//const double dt = 1e-5;
 
 void draw_particles(particle* data, int N)
 {
   for(int i = 0; i < N; i++)
   {
-    DrawCircle(*((data + i)->x), *((data + i)->x+1), 1, 1, (data + i)->mass*circle_radius, circle_color);
+    DrawCircle(*((data + i)->x), *((data + i)->x+1), 1, 1, circle_radius, circle_color);
   }
 }
 
@@ -46,8 +45,6 @@ void update_particle(double *F, particle *data, particle *last_data, int i, doub
 }
 
 // What to do for each step
-// Alla ska väl uppdateras samtidigt, dvs för varje timestep
-// Så hur uppdatera data? Kopia på data och sen byta pekare? dubbelpekare in?
 void step(particle* data, particle *last_data, double delta_t, int N)
 {
   for(int i = 0; i < N; i++)
@@ -58,11 +55,15 @@ void step(particle* data, particle *last_data, double delta_t, int N)
   }
 }
 
+void swap(particle **x, particle **y){
+  void *tmp = *x;
+  *x = *y;
+  *y = tmp;
+}
+
 int main(int argc, char* argv[])
 {
   // ./galsim N filename nsteps delta_t graphics
-
-  //TODO check på dessa? Eller anta de är korrekta?
   int N = atoi(argv[1]);
   char* filename = argv[2];
   int steps = atoi(argv[3]);
@@ -78,17 +79,13 @@ int main(int argc, char* argv[])
     InitializeGraphics(argv[0], wdw_width, wdw_height);
 
     while(!CheckForQuit()) {
-      ClearScreen();
-      draw_particles(data, N);
-      Refresh();
       if(steps > 0)
       {
         step(data, last_data, delta_t, N);
-        //Swap=
-        particle *tmp = last_data;
-        last_data = data;
-        data = tmp;
-        //=====
+        swap(&data, &last_data);
+        ClearScreen();
+        draw_particles(data, N);
+        Refresh();
         steps--;
       }
     }
@@ -99,11 +96,12 @@ int main(int argc, char* argv[])
   {
     while(steps > 0){
       step(data, last_data, delta_t, N);
+      swap(&data, &last_data);
       steps--;
     }
   }
-
-  //TODO write_file(filename, data, N);
+  write_file("test_data.out", data, N);
 
   free(data);
+  free(last_data);
 }
