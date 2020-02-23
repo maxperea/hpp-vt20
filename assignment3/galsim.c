@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
       steps--;
     }
   }
-  write_file("result.gal", data, N);
+  write_file("result.gal", last_data, N);
 
   free(data);
   free(last_data);
