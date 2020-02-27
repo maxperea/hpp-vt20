@@ -1,28 +1,21 @@
 #include "galsim.h"
+#include "quad_tree.h"
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-typedef struct quad_node quad_node_t;
-
-struct quad_node{
-  particle *body;
-  double mass;
-  double com[2];
-  quad_node_t *nw_child;
-  quad_node_t *ne_child;
-  quad_node_t *sw_child;
-  quad_node_t *se_child;
-};
 
 
 void update_mass(quad_node_t *qnode, particle *body){
   if (qnode->mass == body->mass && qnode->com[0] == body->x[0] && qnode->com[1] == body->x[1])
     return; //This is to avoid updating twice for bodies being pushed down in the tree.
-  double new_x = (qnode->mass*qnode->com[0] + body->mass*body->x[0])/(qnode->mass + body->mass);
-  double new_y = (qnode->mass*qnode->com[1] + body->mass*body->x[1])/(qnode->mass + body->mass);
-  qnode->com[0] = new_x;
-  qnode->com[1] = new_y;
-  qnode->mass = qnode->mass + body->mass;
+  qnode->com[0] += body->mass*body->x[0];
+  qnode->com[1] += body->mass*body->x[1];
+  
+  //double new_x = (qnode->mass*qnode->com[0] + body->mass*body->x[0])/(qnode->mass + body->mass);
+  //double new_y = (qnode->mass*qnode->com[1] + body->mass*body->x[1])/(qnode->mass + body->mass);
+  //qnode->com[0] = new_x;
+  //qnode->com[1] = new_y;
+  qnode->mass += body->mass;
 }
 
 quad_node_t *new_quad_node(){
@@ -31,13 +24,13 @@ quad_node_t *new_quad_node(){
 
 
 void insert_aux(quad_node_t *qnode, particle *body, double x, double y, double side_length){
+  //print_tree(qnode, 1);
   if (qnode->mass == 0){ // Basecase, om det är en tom lövnod -> placera body i noden
 
     qnode->body = body;
     qnode->mass = body->mass;
     qnode->com[0] = body->x[0];
     qnode->com[1] = body->x[1];
-    printf("this happens");
 
   } else if (qnode->body == NULL){ //Om det är en mittennod --> anropa rekursivt på rätt kvadrant
 
@@ -51,9 +44,9 @@ void insert_aux(quad_node_t *qnode, particle *body, double x, double y, double s
     } else if (body->x[0] > x + side_length/2 && body->x[1] > y + side_length/2){
       insert_aux(qnode->se_child, body, x + side_length/2, y + side_length/2, side_length/2);
     }
-    printf("this happens too");
-
+    
   } else { // Om vi når en icke-tom lövnod -> splitta till fyra tomma lövnoder och anropa rekursivt med båda.
+    
     qnode->nw_child = new_quad_node();
     qnode->ne_child = new_quad_node();
     qnode->sw_child = new_quad_node();
@@ -64,22 +57,92 @@ void insert_aux(quad_node_t *qnode, particle *body, double x, double y, double s
 
     insert_aux(qnode, tmp, x, y, side_length);
     insert_aux(qnode, body, x, y, side_length);
-    printf("this happens as well");
   }
 }
 
 void insert(quad_node_t *root, particle *body){
   insert_aux(root, body, 0, 0, 1);
+  
+}
+
+void update_com(quad_node_t *root)
+{
+
+  if (root){
+    update_com(root->nw_child);
+    update_com(root->ne_child);
+    update_com(root->sw_child);
+    update_com(root->se_child);
+
+    double comx = 0, comy = 0;
+
+    if(root->body){
+      root->mass = root->body->mass;
+      comx += root->body->x[0]*root->mass;
+      comy += root->body->x[1]*root->mass;
+    }
+
+    if(root->nw_child) {
+      root->mass += root->nw_child->mass;
+      comx += root->nw_child->com[0]*root->nw_child->mass;
+      comy += root->nw_child->com[1]*root->nw_child->mass;
+    }
+    if(root->ne_child) {
+      root->mass += root->ne_child->mass;
+      comx += root->ne_child->com[0]*root->ne_child->mass;
+      comy += root->ne_child->com[1]*root->ne_child->mass;
+    }
+    if(root->sw_child) {
+      root->mass += root->sw_child->mass;
+      comx += root->sw_child->com[0]*root->sw_child->mass;
+      comy += root->sw_child->com[1]*root->sw_child->mass;
+    }
+    if(root->se_child) {
+      root->mass += root->se_child->mass;
+      comx += root->se_child->com[0]*root->se_child->mass;
+      comy += root->se_child->com[1]*root->se_child->mass;
+    }
+
+    root->com[0] = comx/root->mass;
+    root->com[1] = comy/root->mass;
+  }
 }
 
 quad_node_t *construct_quad_tree(particle* data, int N){
   quad_node_t *root = new_quad_node();
+  //print_tree(root,1);
+  
   for(int i = 0; i < N; i++){
     insert(root, (data + i));
   }
+  update_com(root);
+  //print_tree(root, 1);
   return root;
 }
 
+void print_tree(quad_node_t *root, int layer)
+{
+  printf("LAYER %d\n", layer);
+  if(root && root->body == NULL)
+    {
+      printf("Mass: %f, com: %f,%f\n", root->mass, root->com[0],root->com[1]);
+      print_tree(root->ne_child, layer+1);
+      print_tree(root->nw_child, layer+1);
+      print_tree(root->se_child, layer+1);
+      print_tree(root->sw_child, layer+1);
+    }
+  else
+    {
+      printf("Node!\n-----\n");
+    }
+}
+
 void quad_tree_destroy(quad_node_t *root){
-  //TODO
+  if (root){
+    quad_tree_destroy(root->nw_child);
+    quad_tree_destroy(root->ne_child);
+    quad_tree_destroy(root->sw_child);
+    quad_tree_destroy(root->se_child);
+    free(root);
+  }
 }
