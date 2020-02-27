@@ -5,8 +5,26 @@
 #include "graphics.h"
 #include "quad_tree.h"
 
-const double circle_radius=0.0025, circle_color=0;
+const double circle_radius=0.0025, circle_color=0, rect_color=0;
 const double e0 = 1e-3;
+
+
+
+void draw_quads_aux(quad_node_t *node, double x, double y, double side_length){
+  if(node){
+    DrawRectangle(x, y, 1, 1, side_length, side_length, rect_color);
+    draw_quads_aux(node->nw_child, x, y, side_length/2);
+    draw_quads_aux(node->ne_child, x + side_length/2, y, side_length/2);
+    draw_quads_aux(node->sw_child, x, y + side_length/2, side_length/2);
+    draw_quads_aux(node->se_child, x + side_length/2, y + side_length/2, side_length/2);
+  } else {
+    return;
+  }
+}
+
+void draw_quads(quad_node_t *root){
+  draw_quads_aux(root, 0, 0, 1);
+}
 
 void draw_particles(particle* data, int N)
 {
@@ -75,7 +93,7 @@ int main(int argc, char* argv[])
   particle* last_data = read_file(filename, N);
   particle* data = read_file(filename, N);
 
-  quad_node_t *root = construct_quad_tree(data, N);
+  //quad_node_t *root = construct_quad_tree(data, N);
 
   if(g)
   {
@@ -89,6 +107,9 @@ int main(int argc, char* argv[])
         swap(&data, &last_data);
         ClearScreen();
         draw_particles(data, N);
+        quad_node_t *root = construct_quad_tree(data, N);
+        draw_quads(root);
+        quad_tree_destroy(root);
         Refresh();
         steps--;
       }
