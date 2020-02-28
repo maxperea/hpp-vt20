@@ -5,11 +5,6 @@
 #include "graphics.h"
 #include "quad_tree.h"
 
-/**
- * TODO
- * - 
- **/
-
 const double circle_radius=0.0025, circle_color=0, rect_color=0;
 const double e0 = 1e-3;
 
@@ -43,17 +38,19 @@ void get_force(quad_node_t *node, double *F, particle *data,
                int N, double max_theta, double side_len, double box_y, double box_x){
 
   double r_ij;
-  if(node == NULL) return;
+  // If this is an empty leaf, do nothing
+  if(node == NULL || node->mass == 0) return;
   
   //case 1: external node != this node
   if(node->body != NULL)
     {
       if(node->body == data) return; // If we reach leaf and it's this node - do nothing
+        
       // TODO special case när en extern nod är på samma plats som data
       
-      r_ij = sqrt(pow(data->x[0] - node->body->x[0], 2) + pow(data->x[1] - node->body->x[1], 2));
-      F[0] += (node->body->mass / pow(r_ij + e0, 3)) * (data->x[0] - node->body->x[0]);
-      F[1] += (node->body->mass / pow(r_ij + e0, 3)) * (data->x[1] - node->body->x[1]);
+      r_ij = sqrt(pow(data->x[0] - node->com[0], 2) + pow(data->x[1] - node->com[1], 2));
+      F[0] += (node->mass / pow(r_ij + e0, 3)) * (data->x[0] - node->com[0]);
+      F[1] += (node->mass / pow(r_ij + e0, 3)) * (data->x[1] - node->com[1]);
       return;
     }
 
@@ -108,10 +105,9 @@ void step(quad_node_t* root, particle* data, double delta_t, double max_theta, i
       double scalar = -(100/N) * data->mass;
       F[0] = scalar*F[0];
       F[1] = scalar*F[1];
-      // printf("force x: %f, force y: %f\n", F[0],F[1]);
+      //printf("force x: %f, force y: %f\n", F[0],F[1]);
       update_particle(F, (data +i), delta_t);
     }
-  sleep(1);
 }
 
 void swap(particle **x, particle **y){
@@ -134,7 +130,7 @@ int main(int argc, char* argv[])
 
   particle* data = read_file(filename, N);
   //particle* last_data = read_file(filename, N);
-  quad_node_t *root;
+  quad_node_t *root = NULL;
   
   if(g)
   {
@@ -163,7 +159,7 @@ int main(int argc, char* argv[])
        root = construct_quad_tree(data, N);
        step(root, data, delta_t, max_theta, N);
        quad_tree_destroy(root);
-      steps--;
+       steps--;
     }
   }
   write_file("result.gal", data, N);

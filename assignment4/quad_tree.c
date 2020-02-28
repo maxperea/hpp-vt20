@@ -34,7 +34,7 @@ void insert_aux(quad_node_t *qnode, particle *body, double x, double y, double s
 
   } else if (qnode->body == NULL){ //Om det är en mittennod --> anropa rekursivt på rätt kvadrant
 
-    update_mass(qnode, body);
+    //update_mass(qnode, body);
     if (body->x[0] <= x + side_length/2 && body->x[1] <= y + side_length/2){
       insert_aux(qnode->nw_child, body, x, y, side_length/2);
     } else if (body->x[0] > x + side_length/2 && body->x[1] <= y + side_length/2){
@@ -68,43 +68,54 @@ void insert(quad_node_t *root, particle *body){
 void update_com(quad_node_t *root)
 {
 
-  if (root){
+  if (root && root->mass > 0){
     update_com(root->nw_child);
     update_com(root->ne_child);
     update_com(root->sw_child);
     update_com(root->se_child);
 
-    double comx = 0, comy = 0;
+    double comx = 0;
+    double comy = 0;
+    root->mass = 0;
 
-    if(root->body){
-      root->mass = root->body->mass;
-      comx += root->body->x[0]*root->mass;
-      comy += root->body->x[1]*root->mass;
-    }
+    if(root->nw_child)
+      {
+        root->mass += root->nw_child->mass;
+        comx += root->nw_child->com[0]*root->nw_child->mass;
+        comy += root->nw_child->com[1]*root->nw_child->mass;
+      }
+    if(root->ne_child)
+      {
+        root->mass += root->ne_child->mass;
+        comx += root->ne_child->com[0]*root->ne_child->mass;
+        comy += root->ne_child->com[1]*root->ne_child->mass;
+      }
+    if(root->sw_child)
+      {
+        root->mass += root->sw_child->mass;
+        comx += root->sw_child->com[0]*root->sw_child->mass;
+        comy += root->sw_child->com[1]*root->sw_child->mass;
+      }
+    if(root->se_child)
+      {
+        root->mass += root->se_child->mass;
+        comx += root->se_child->com[0]*root->se_child->mass;
+        comy += root->se_child->com[1]*root->se_child->mass;
+      }
 
-    if(root->nw_child) {
-      root->mass += root->nw_child->mass;
-      comx += root->nw_child->com[0]*root->nw_child->mass;
-      comy += root->nw_child->com[1]*root->nw_child->mass;
-    }
-    if(root->ne_child) {
-      root->mass += root->ne_child->mass;
-      comx += root->ne_child->com[0]*root->ne_child->mass;
-      comy += root->ne_child->com[1]*root->ne_child->mass;
-    }
-    if(root->sw_child) {
-      root->mass += root->sw_child->mass;
-      comx += root->sw_child->com[0]*root->sw_child->mass;
-      comy += root->sw_child->com[1]*root->sw_child->mass;
-    }
-    if(root->se_child) {
-      root->mass += root->se_child->mass;
-      comx += root->se_child->com[0]*root->se_child->mass;
-      comy += root->se_child->com[1]*root->se_child->mass;
-    }
-
-    root->com[0] = comx/root->mass;
-    root->com[1] = comy/root->mass;
+    if(root->body)
+      {
+        root->mass = root->body->mass;
+        root->com[0] = root->body->x[0];
+        root->com[1] = root->body->x[1];
+      }
+    else
+      {
+        root->com[0] = comx/root->mass;
+        root->com[1] = comy/root->mass;
+      }
+    //printf("root com x %f, root com y %f ---\n", root->com[0], root->com[1]);
+    //printf("comx %f, comy %f ---\n", comx, comy);
   }
 }
 
