@@ -31,6 +31,8 @@ quad_node_t *new_quad_node(){
 
 
 void insert_aux(quad_node_t *qnode, particle *body, double x, double y, double side_length){
+  if (body->x[0] < x || body->x[0] > x + side_length || body->x[1] < y || body->x[1] > y + side_length)
+    return;
   if (qnode->mass == 0){ // Basecase, om det är en tom lövnod -> placera body i noden
 
     qnode->body = body;

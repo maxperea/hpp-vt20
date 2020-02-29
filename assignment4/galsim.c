@@ -34,16 +34,33 @@ void draw_particles(particle* data, int N)
   }
 }
 
-// Räknar ut totala kraftvektorn F på partikel i och lagrar i array F
-void get_force(double *F, particle *data, int i, int N){
+void get_force_aux(quad_node_t *node, double max_theta, double *F, particle *data, int i, double x, double y, double side_length){
   double r_ij = 0;
-  for (int j = 0; j < N; j++){
-    if(i != j){
-      r_ij = sqrt(pow(data[i].x[0] - data[j].x[0], 2) + pow(data[i].x[1] - data[j].x[1], 2));
-      F[0] += (data[j].mass / pow(r_ij + e0, 3)) * (data[i].x[0] - data[j].x[0]);
-      F[1] += (data[j].mass / pow(r_ij + e0, 3)) * (data[i].x[1] - data[j].x[1]);
-    }
+  if (!node || node->mass == 0)
+    return;
+  if (node->body){
+    if (node->body == data+i)
+      return;
+    r_ij = sqrt(pow(data[i].x[0] - node->com[0], 2) + pow(data[i].x[1] - node->com[1], 2));
+    F[0] += (node->mass / pow(r_ij + e0, 3)) * (data[i].x[0] - node->com[0]);
+    F[1] += (node->mass / pow(r_ij + e0, 3)) * (data[i].x[1] - node->com[1]);
+    return;
   }
+  double theta = side_length/(sqrt(pow(data[i].x[0] - x + side_length/2, 2) + pow(data[i].x[1] - y + side_length/2, 2)));
+  if (theta <= max_theta){
+    r_ij = sqrt(pow(data[i].x[0] - node->com[0], 2) + pow(data[i].x[1] - node->com[1], 2));
+    F[0] += (node->mass / pow(r_ij + e0, 3)) * (data[i].x[0] - node->com[0]);
+    F[1] += (node->mass / pow(r_ij + e0, 3)) * (data[i].x[1] - node->com[1]);
+    return;
+  }
+  get_force_aux(node->nw_child, max_theta, F, data, i, x, y, side_length/2);
+  get_force_aux(node->ne_child, max_theta, F, data, i, x + side_length/2, y, side_length/2);
+  get_force_aux(node->sw_child, max_theta, F, data, i, x, y + side_length/2, side_length/2);
+  get_force_aux(node->se_child, max_theta, F, data, i, x + side_length/2, y + side_length/2, side_length/2);
+}
+
+void get_force(quad_node_t *root, double max_theta, double *F, particle *data, int i, int N){
+  get_force_aux(root, max_theta, F, data, i, 0, 0, 1);
   double scalar = -(100/N) * data[i].mass;
   F[0] = scalar*F[0];
   F[1] = scalar*F[1];
@@ -64,12 +81,12 @@ void update_particle(double *F, particle *data, particle *last_data, int i, doub
 }
 
 // What to do for each step
-void step(particle* data, particle *last_data, double delta_t, int N)
+void step(quad_node_t *root, double max_theta, particle* data, particle *last_data, double delta_t, int N)
 {
   for(int i = 0; i < N; i++)
   {
     double F[2] = {0, 0};
-    get_force(F, last_data, i, N);
+    get_force(root, max_theta, F, last_data, i, N);
     update_particle(F, data, last_data, i, delta_t);
   }
 }
@@ -88,7 +105,8 @@ int main(int argc, char* argv[])
   char* filename = argv[2];
   int steps = atoi(argv[3]);
   double delta_t = atof(argv[4]);
-  int g = atoi(argv[5]);
+  double max_theta = atof(argv[5]);
+  int g = atoi(argv[6]);
 
   particle* last_data = read_file(filename, N);
   particle* data = read_file(filename, N);
@@ -103,12 +121,12 @@ int main(int argc, char* argv[])
     while(!CheckForQuit()) {
       if(steps > 0)
       {
-        step(data, last_data, delta_t, N);
+        quad_node_t *root = construct_quad_tree(last_data, N);
+        step(root, max_theta, data, last_data, delta_t, N);
         swap(&data, &last_data);
         ClearScreen();
         draw_particles(data, N);
-        quad_node_t *root = construct_quad_tree(data, N);
-        draw_quads(root);
+        //draw_quads(root);
         quad_tree_destroy(root);
         Refresh();
         steps--;
@@ -120,8 +138,10 @@ int main(int argc, char* argv[])
   else
   {
     while(steps > 0){
-      step(data, last_data, delta_t, N);
+      quad_node_t *root = construct_quad_tree(last_data, N);
+      step(root, max_theta, data, last_data, delta_t, N);
       swap(&data, &last_data);
+      quad_tree_destroy(root);
       steps--;
     }
   }
