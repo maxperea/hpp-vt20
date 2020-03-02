@@ -21,16 +21,16 @@ void get_force_aux(quad_node_t *node, double max_theta, double *F, particle *dat
   if (node->body){
     if (node->body == data+i)
       return;
-    r_ij = sqrt((data[i].x[0] - node->com[0])*(data[i].x[0] - node->com[0]) + (data[i].x[1] - node->com[1])*(data[i].x[1] - node->com[1]));
-    F[0] += (node->mass / ((r_ij + e0)*(r_ij + e0)*(r_ij + e0)))*(data[i].x[0] - node->com[0]);
-    F[1] += (node->mass / ((r_ij + e0)*(r_ij + e0)*(r_ij + e0)))*(data[i].x[1] - node->com[1]);
+    r_ij = sqrt(pow(data[i].x[0] - node->com[0], 2) + pow(data[i].x[1] - node->com[1], 2));
+    F[0] += (node->mass / pow(r_ij + e0, 3)) * (data[i].x[0] - node->com[0]);
+    F[1] += (node->mass / pow(r_ij + e0, 3)) * (data[i].x[1] - node->com[1]);
     return;
   }
-  const double theta = side_length/(sqrt((data[i].x[0] - x + side_length/2)*(data[i].x[0] - x + side_length/2) + (data[i].x[1] - y + side_length/2)*(data[i].x[1] - y + side_length/2)));
+  const double theta = side_length/(sqrt(pow(data[i].x[0] - x + side_length/2, 2) + pow(data[i].x[1] - y + side_length/2, 2)));
   if (theta <= max_theta){
-    r_ij = sqrt((data[i].x[0] - node->com[0])*(data[i].x[0] - node->com[0]) + (data[i].x[1] - node->com[1])*(data[i].x[1] - node->com[1]));
-    F[0] += (node->mass / ((r_ij + e0)*(r_ij + e0)*(r_ij + e0)))*(data[i].x[0] - node->com[0]);
-    F[1] += (node->mass / ((r_ij + e0)*(r_ij + e0)*(r_ij + e0)))*(data[i].x[1] - node->com[1]);
+    r_ij = sqrt(pow(data[i].x[0] - node->com[0], 2) + pow(data[i].x[1] - node->com[1], 2));
+    F[0] += (node->mass / pow(r_ij + e0, 3)) * (data[i].x[0] - node->com[0]);
+    F[1] += (node->mass / pow(r_ij + e0, 3)) * (data[i].x[1] - node->com[1]);
     return;
   }
   get_force_aux(node->nw_child, max_theta, F, data, i, x, y, side_length/2);
