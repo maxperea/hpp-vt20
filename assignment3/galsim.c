@@ -25,7 +25,7 @@ void get_force(double *F, particle *data, int i, int N){
       F[1] += (data[j].mass / pow(r_ij + e0, 3)) * (data[i].x[1] - data[j].x[1]);
     }
   }
-  double scalar = -(100/N) * data[i].mass;
+  double scalar = -(100/ (double) N) * data[i].mass;
   F[0] = scalar*F[0];
   F[1] = scalar*F[1];
 }

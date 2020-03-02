@@ -61,7 +61,7 @@ void get_force_aux(quad_node_t *node, double max_theta, double *F, particle *dat
 
 void get_force(quad_node_t *root, double max_theta, double *F, particle *data, int i, int N){
   get_force_aux(root, max_theta, F, data, i, 0, 0, 1);
-  double scalar = -(100/N) * data[i].mass;
+  double scalar = -(100/ (double) N) * data[i].mass;
   F[0] = scalar*F[0];
   F[1] = scalar*F[1];
 }
