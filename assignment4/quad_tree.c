@@ -27,7 +27,7 @@ quad_node_t *new_quad_node(){
   return calloc(1, sizeof(quad_node_t));
 }
 
-void insert_aux(quad_node_t *qnode, particle *body, double x, double y, double side_length){
+void insert(quad_node_t *qnode, particle *body, double x, double y, double side_length){
   if (body->x[0] < x || body->x[0] > x + side_length || body->x[1] < y || body->x[1] > y + side_length)
     return;
   if (qnode->mass == 0){ // Basecase, om det är en tom lövnod -> placera body i noden
@@ -38,13 +38,13 @@ void insert_aux(quad_node_t *qnode, particle *body, double x, double y, double s
   } else if (qnode->body == NULL){ //Om det är en mittennod --> anropa rekursivt på rätt kvadrant
     update_mass(qnode, body);
     if (body->x[0] <= x + side_length/2 && body->x[1] <= y + side_length/2){
-      insert_aux(qnode->nw_child, body, x, y, side_length/2);
+      insert(qnode->nw_child, body, x, y, side_length/2);
     } else if (body->x[0] > x + side_length/2 && body->x[1] <= y + side_length/2){
-      insert_aux(qnode->ne_child, body, x + side_length/2, y, side_length/2);
+      insert(qnode->ne_child, body, x + side_length/2, y, side_length/2);
     } else if (body->x[0] <= x + side_length/2 && body->x[1] > y + side_length/2){
-      insert_aux(qnode->sw_child, body, x, y + side_length/2, side_length/2);
+      insert(qnode->sw_child, body, x, y + side_length/2, side_length/2);
     } else if (body->x[0] > x + side_length/2 && body->x[1] > y + side_length/2){
-      insert_aux(qnode->se_child, body, x + side_length/2, y + side_length/2, side_length/2);
+      insert(qnode->se_child, body, x + side_length/2, y + side_length/2, side_length/2);
     }
   } else { // Om vi når en icke-tom lövnod -> splitta till fyra tomma lövnoder och anropa rekursivt med båda.
     qnode->nw_child = new_quad_node();
@@ -55,19 +55,19 @@ void insert_aux(quad_node_t *qnode, particle *body, double x, double y, double s
     particle *tmp = qnode->body;
     qnode->body = NULL;
 
-    insert_aux(qnode, tmp, x, y, side_length);
-    insert_aux(qnode, body, x, y, side_length);
+    insert(qnode, tmp, x, y, side_length);
+    insert(qnode, body, x, y, side_length);
   }
 }
 
-void insert(quad_node_t *root, particle *body){
-  insert_aux(root, body, 0, 0, 1);
+void insert_a(quad_node_t *root, particle *body){
+  //insert_aux(root, body, 0, 0, 1);
 }
 
 quad_node_t *construct_quad_tree(particle* data, int N){
   quad_node_t *root = new_quad_node();
   for(int i = 0; i < N; i++){
-    insert(root, (data + i));
+    insert(root, (data + i), 0, 0, 1);
   }
   return root;
 }

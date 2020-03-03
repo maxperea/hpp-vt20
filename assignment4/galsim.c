@@ -14,7 +14,7 @@ void draw_particles(particle* data, int N){
   }
 }
 
-void get_force_aux(quad_node_t *node, double max_theta, double *F, particle *data, int i, double x, double y, double side_length){
+void get_force(quad_node_t *node, double max_theta, double *F, particle *data, int i, double x, double y, double side_length){
   double r_ij = 0;
   if (!node || node->mass == 0)
     return;
@@ -33,24 +33,24 @@ void get_force_aux(quad_node_t *node, double max_theta, double *F, particle *dat
     F[1] += (node->mass / pow(r_ij + e0, 3)) * (data[i].x[1] - node->com[1]);
     return;
   }
-  get_force_aux(node->nw_child, max_theta, F, data, i, x, y, side_length/2);
-  get_force_aux(node->ne_child, max_theta, F, data, i, x + side_length/2, y, side_length/2);
-  get_force_aux(node->sw_child, max_theta, F, data, i, x, y + side_length/2, side_length/2);
-  get_force_aux(node->se_child, max_theta, F, data, i, x + side_length/2, y + side_length/2, side_length/2);
-}
-
-void get_force(quad_node_t *root, double max_theta, double *F, particle *data, int i, int N){
-  get_force_aux(root, max_theta, F, data, i, 0, 0, 1);
-  const double scalar = -(100/ (double) N) * data[i].mass;
-  F[0] = scalar*F[0];
-  F[1] = scalar*F[1];
+  get_force(node->nw_child, max_theta, F, data, i, x, y, side_length/2);
+  get_force(node->ne_child, max_theta, F, data, i, x + side_length/2, y, side_length/2);
+  get_force(node->sw_child, max_theta, F, data, i, x, y + side_length/2, side_length/2);
+  get_force(node->se_child, max_theta, F, data, i, x + side_length/2, y + side_length/2, side_length/2);
 }
 
 void step(quad_node_t *root, double max_theta, particle* data, double dt, int N)
 {
   for(int i = 0; i < N; i++){
     double F[2] = {0, 0};
-    get_force(root, max_theta, F, data, i, N);
+
+    get_force(root, max_theta, F, data, i, 0, 0, 1);
+    
+    double scalar = -(100/ (double) N) * data[i].mass;
+    F[0] = scalar*F[0];
+    F[1] = scalar*F[1];
+
+    //Update particle data
     double a[2];
     a[0] = F[0] / data[i].mass;
     a[1] = F[1] / data[i].mass;
@@ -63,7 +63,7 @@ void step(quad_node_t *root, double max_theta, particle* data, double dt, int N)
 
 int main(int argc, char* argv[])
 {
-  const int N = atof(argv[1]);
+  const int N = atoi(argv[1]);
   char* filename = argv[2];
   int steps = atoi(argv[3]);
   const double delta_t = atof(argv[4]);
